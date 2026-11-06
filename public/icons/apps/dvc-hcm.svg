@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="hcm-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0052CC" />
+      <stop offset="100%" stop-color="#0747A6" />
+    </linearGradient>
+    <linearGradient id="hcm-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF066" />
+      <stop offset="100%" stop-color="#F5A623" />
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="26" fill="url(#hcm-bg)" />
+  <!-- Ben Thanh / Lotus crest representation -->
+  <circle cx="64" cy="52" r="30" fill="#093C85" stroke="url(#hcm-gold)" stroke-width="2.5" />
+  <!-- Clock Tower silhouette -->
+  <path d="M52 68 V54 L60 42 H68 L76 54 V68 Z" fill="url(#hcm-gold)" opacity="0.9" />
+  <circle cx="64" cy="55" r="5" fill="#093C85" stroke="#FFFFFF" stroke-width="1.5" />
+  <!-- Lotus Petals -->
+  <path d="M46 68 Q64 64 82 68 Q64 74 46 68 Z" fill="#FFFFFF" />
+  <text x="64" y="96" fill="#FFFFFF" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="11" text-anchor="middle" letter-spacing="0.5">DVC TP.HCM</text>
+  <text x="64" y="112" fill="#FFE57F" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="7.5" text-anchor="middle" letter-spacing="0.5">UBND THÀNH PHỐ</text>
+</svg>

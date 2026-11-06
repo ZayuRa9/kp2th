@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="vssid-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0288D1" />
+      <stop offset="100%" stop-color="#01579B" />
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="26" fill="url(#vssid-bg)" />
+  <!-- BHXH Wings / Heart Symbol -->
+  <circle cx="64" cy="50" r="28" fill="#FFFFFF" />
+  <path d="M52 48 C52 38 64 36 64 45 C64 36 76 38 76 48 C76 58 64 66 64 66 C64 66 52 58 52 48 Z" fill="#E53935" />
+  <path d="M44 48 Q64 32 84 48 Q64 54 44 48 Z" fill="#0288D1" opacity="0.8" />
+  <text x="64" y="93" fill="#FFFFFF" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="14" text-anchor="middle" letter-spacing="1">VssID</text>
+  <text x="64" y="110" fill="#E1F5FE" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="7.5" text-anchor="middle" letter-spacing="0.5">BHXH VIỆT NAM</text>
+</svg>

@@ -1,0 +1,8 @@
+{
+  "name": "Remix Khu Phố 02 - Phường Tân Hưng",
+  "description": "Hệ thống thông tin số, tiện ích số và điều hành cộng đồng dân cư Khu phố 02, Phường Tân Hưng.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
