@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { fetchPublicData, verifyAdminSession, PublicDataResponse } from './services/api';
+import { getInitialPublicData } from './data/initialData';
 import { Header } from './components/Header';
 import { BannerTicker } from './components/BannerTicker';
 import { HeroOverview } from './components/HeroOverview';
@@ -78,10 +79,10 @@ function AppContent() {
       setPublicData(data);
       setError(null);
     } catch (err: any) {
-      console.error('Lỗi nạp dữ liệu:', err);
-      if (!isBackground) {
-        setError(err.message || 'Không thể tải dữ liệu hệ thống');
-      }
+      console.warn('Lỗi nạp dữ liệu từ máy chủ, kích hoạt dữ liệu cơ sở dự phòng:', err);
+      const fallback = getInitialPublicData();
+      setPublicData(fallback);
+      setError(null);
     } finally {
       if (!isBackground) setLoading(false);
     }

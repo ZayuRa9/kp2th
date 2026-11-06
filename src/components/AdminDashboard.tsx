@@ -37,7 +37,9 @@ import {
   FileVideo,
   Presentation,
   Play,
+  FolderOpen,
 } from 'lucide-react';
+import { DocumentUploader, UtilityResourceForm } from './DocumentUploader';
 import {
   AdminDataResponse,
   saveCommitteeMemberApi,
@@ -64,6 +66,8 @@ import {
   deleteAnswerApi,
   uploadFileApi,
   changeAdminPassword,
+  getLocalDatabase,
+  saveLocalDatabase,
 } from '../services/api';
 import {
   CommitteeMember,
@@ -115,6 +119,7 @@ type TabKey =
   | 'demographics'
   | 'organizations'
   | 'utilities'
+  | 'utilityResources'
   | 'backup';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -127,6 +132,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Quick Utility Resource Management (Standalone DocumentUploader Tab)
+  const [quickManageResources, setQuickManageResources] = useState<UtilityResourceForm>({
+    videoGuideUrl: '',
+    videoGuideName: '',
+    wordGuideUrl: '',
+    wordGuideName: '',
+    pptGuideUrl: '',
+    pptGuideName: '',
+    pdfGuideUrl: '',
+    pdfGuideName: '',
+  });
 
   const showNotification = (msg: string, isError = false) => {
     if (isError) {
@@ -855,6 +872,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             { key: 'demographics', label: 'Chỉ số Dân cư', icon: Layers },
             { key: 'organizations', label: 'Thông tin Đoàn thể', icon: Building2 },
             { key: 'utilities', label: 'Thư viện Tiện ích số', icon: ExternalLink },
+            { key: 'utilityResources', label: 'Tải lên Tài nguyên (MP4/DOCX/PPTX/PDF)', icon: FolderOpen },
             { key: 'backup', label: 'Bảo mật & Sao lưu', icon: Database },
           ].map((item) => {
             const Icon = item.icon;
@@ -899,6 +917,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               { key: 'demographics', label: 'Chỉ số', icon: Layers },
               { key: 'organizations', label: 'Đoàn thể', icon: Building2 },
               { key: 'utilities', label: 'Tiện ích', icon: ExternalLink },
+              { key: 'utilityResources', label: 'Tài nguyên số', icon: FolderOpen },
               { key: 'backup', label: 'Bảo mật', icon: Database },
             ].map((tab) => {
               const Icon = tab.icon;
@@ -3521,249 +3540,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </div>
                   </div>
 
-                  {/* TÀI LIỆU & VIDEO HƯỚNG DẪN DÂN CƯ SỬ DỤNG (MP4, WORD, PPT, PDF) */}
-                  <div className="p-4 rounded-xl border border-indigo-200 bg-indigo-50/40 space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-2 border-b border-indigo-100">
-                      <div>
-                        <h4 className="text-xs font-black uppercase text-indigo-950 flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-indigo-700" />
-                          <span>TÀI LIỆU &amp; VIDEO HƯỚNG DẪN DÂN CƯ (TẢI LÊN MP4, WORD, PPT, PDF)</span>
-                        </h4>
-                        <p className="text-[11px] text-slate-600 mt-0.5">
-                          Tải lên các tệp hướng dẫn từ máy tính để bà con khu phố xem trực tiếp hoặc tải về khi bấm vào tiện ích số.
-                        </p>
-                      </div>
-                      <span className="text-[10px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full shrink-0">
-                        Đầy đủ 4 định dạng
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                      {/* 1. TỆP MP4 (VIDEO HƯỚNG DẪN) */}
-                      <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                            <FileVideo className="w-4 h-4 text-rose-600" />
-                            <span>1. Video hướng dẫn (MP4)</span>
-                          </span>
-                          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-rose-100 text-rose-800">
-                            MP4
-                          </span>
-                        </div>
-
-                        <div className="space-y-2">
-                          <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold cursor-pointer transition-colors shadow-2xs active:scale-95">
-                            <Upload className="w-3.5 h-3.5" />
-                            <span>{uploadingGuideMp4 ? 'Đang tải MP4...' : 'Chọn tệp MP4 từ máy tính'}</span>
-                            <input
-                              type="file"
-                              accept="video/mp4,.mp4"
-                              className="hidden"
-                              disabled={uploadingGuideMp4}
-                              onChange={(e) => handleGuideUpload(e, 'mp4')}
-                            />
-                          </label>
-
-                          <div className="text-[11px] text-slate-500">
-                            Hoặc dán link video (YouTube / MP4 online):
-                          </div>
-                          <input
-                            type="url"
-                            placeholder="https://... hoặc link YouTube"
-                            value={utilForm.videoGuideUrl}
-                            onChange={(e) => setUtilForm({ ...utilForm, videoGuideUrl: e.target.value })}
-                            className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg bg-slate-50 focus:bg-white"
-                          />
-
-                          {utilForm.videoGuideUrl && (
-                            <div className="p-2 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-between gap-2 text-xs">
-                              <div className="flex items-center gap-1.5 truncate text-rose-900 font-medium">
-                                <Play className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-                                <span className="truncate">{utilForm.videoGuideName || utilForm.videoGuideUrl}</span>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => setUtilForm((prev) => ({ ...prev, videoGuideUrl: '', videoGuideName: '' }))}
-                                className="text-rose-700 hover:text-rose-900 shrink-0 p-1"
-                                title="Xóa video này"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* 2. TỆP WORD (.DOC, .DOCX) */}
-                      <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                            <FileText className="w-4 h-4 text-blue-600" />
-                            <span>2. File Word (Hướng dẫn / Biểu mẫu)</span>
-                          </span>
-                          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-blue-100 text-blue-800">
-                            DOC / DOCX
-                          </span>
-                        </div>
-
-                        <div className="space-y-2">
-                          <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer transition-colors shadow-2xs active:scale-95">
-                            <Upload className="w-3.5 h-3.5" />
-                            <span>{uploadingGuideWord ? 'Đang tải Word...' : 'Chọn tệp Word (.doc, .docx) từ máy'}</span>
-                            <input
-                              type="file"
-                              accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                              className="hidden"
-                              disabled={uploadingGuideWord}
-                              onChange={(e) => handleGuideUpload(e, 'word')}
-                            />
-                          </label>
-
-                          {utilForm.wordGuideUrl ? (
-                            <div className="p-2 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-between gap-2 text-xs">
-                              <div className="flex items-center gap-1.5 truncate text-blue-900 font-medium">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                                <span className="truncate">{utilForm.wordGuideName || 'Tài liệu hướng dẫn Word'}</span>
-                              </div>
-                              <div className="flex items-center gap-1 shrink-0">
-                                <a
-                                  href={utilForm.wordGuideUrl}
-                                  download
-                                  className="text-blue-700 hover:text-blue-900 p-1"
-                                  title="Tải thử"
-                                >
-                                  <Download className="w-3.5 h-3.5" />
-                                </a>
-                                <button
-                                  type="button"
-                                  onClick={() => setUtilForm((prev) => ({ ...prev, wordGuideUrl: '', wordGuideName: '' }))}
-                                  className="text-rose-700 hover:text-rose-900 p-1"
-                                  title="Xóa tệp Word này"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="text-[11px] text-slate-400 italic">Chưa đính kèm tệp Word</div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* 3. TỆP POWERPOINT PPT (.PPT, .PPTX) */}
-                      <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                            <Presentation className="w-4 h-4 text-orange-600" />
-                            <span>3. File PPT (Slide trình chiếu)</span>
-                          </span>
-                          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-orange-100 text-orange-800">
-                            PPT / PPTX
-                          </span>
-                        </div>
-
-                        <div className="space-y-2">
-                          <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold cursor-pointer transition-colors shadow-2xs active:scale-95">
-                            <Upload className="w-3.5 h-3.5" />
-                            <span>{uploadingGuidePpt ? 'Đang tải PPT...' : 'Chọn tệp PPT (.ppt, .pptx) từ máy'}</span>
-                            <input
-                              type="file"
-                              accept=".ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
-                              className="hidden"
-                              disabled={uploadingGuidePpt}
-                              onChange={(e) => handleGuideUpload(e, 'ppt')}
-                            />
-                          </label>
-
-                          {utilForm.pptGuideUrl ? (
-                            <div className="p-2 rounded-lg bg-orange-50 border border-orange-200 flex items-center justify-between gap-2 text-xs">
-                              <div className="flex items-center gap-1.5 truncate text-orange-900 font-medium">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-orange-600 shrink-0" />
-                                <span className="truncate">{utilForm.pptGuideName || 'Slide trình chiếu PowerPoint'}</span>
-                              </div>
-                              <div className="flex items-center gap-1 shrink-0">
-                                <a
-                                  href={utilForm.pptGuideUrl}
-                                  download
-                                  className="text-orange-700 hover:text-orange-900 p-1"
-                                  title="Tải thử"
-                                >
-                                  <Download className="w-3.5 h-3.5" />
-                                </a>
-                                <button
-                                  type="button"
-                                  onClick={() => setUtilForm((prev) => ({ ...prev, pptGuideUrl: '', pptGuideName: '' }))}
-                                  className="text-rose-700 hover:text-rose-900 p-1"
-                                  title="Xóa tệp PPT này"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="text-[11px] text-slate-400 italic">Chưa đính kèm tệp PPT</div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* 4. TỆP PDF (TÀI LIỆU HƯỚNG DẪN) */}
-                      <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                            <FileText className="w-4 h-4 text-emerald-600" />
-                            <span>4. File PDF (Tài liệu hướng dẫn)</span>
-                          </span>
-                          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                            PDF
-                          </span>
-                        </div>
-
-                        <div className="space-y-2">
-                          <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold cursor-pointer transition-colors shadow-2xs active:scale-95">
-                            <Upload className="w-3.5 h-3.5" />
-                            <span>{uploadingGuidePdf ? 'Đang tải PDF...' : 'Chọn tệp PDF (.pdf) từ máy tính'}</span>
-                            <input
-                              type="file"
-                              accept=".pdf,application/pdf"
-                              className="hidden"
-                              disabled={uploadingGuidePdf}
-                              onChange={(e) => handleGuideUpload(e, 'pdf')}
-                            />
-                          </label>
-
-                          {utilForm.pdfGuideUrl ? (
-                            <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-between gap-2 text-xs">
-                              <div className="flex items-center gap-1.5 truncate text-emerald-900 font-medium">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                                <span className="truncate">{utilForm.pdfGuideName || 'Tài liệu hướng dẫn PDF'}</span>
-                              </div>
-                              <div className="flex items-center gap-1 shrink-0">
-                                <a
-                                  href={utilForm.pdfGuideUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-emerald-700 hover:text-emerald-900 p-1"
-                                  title="Xem trước"
-                                >
-                                  <ExternalLink className="w-3.5 h-3.5" />
-                                </a>
-                                <button
-                                  type="button"
-                                  onClick={() => setUtilForm((prev) => ({ ...prev, pdfGuideUrl: '', pdfGuideName: '' }))}
-                                  className="text-rose-700 hover:text-rose-900 p-1"
-                                  title="Xóa tệp PDF này"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="text-[11px] text-slate-400 italic">Chưa đính kèm tệp PDF</div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  {/* TÀI LIỆU & VIDEO HƯỚNG DẪN DÂN CƯ SỬ DỤNG - DOCUMENT UPLOADER */}
+                  <DocumentUploader
+                    utilityName={utilForm.name || 'Tiện ích số đang biên tập'}
+                    resources={{
+                      videoGuideUrl: utilForm.videoGuideUrl,
+                      videoGuideName: utilForm.videoGuideName,
+                      wordGuideUrl: utilForm.wordGuideUrl,
+                      wordGuideName: utilForm.wordGuideName,
+                      pptGuideUrl: utilForm.pptGuideUrl,
+                      pptGuideName: utilForm.pptGuideName,
+                      pdfGuideUrl: utilForm.pdfGuideUrl,
+                      pdfGuideName: utilForm.pdfGuideName,
+                    }}
+                    onChange={(updated) => {
+                      setUtilForm((prev) => ({
+                        ...prev,
+                        ...updated,
+                      }));
+                    }}
+                    onNotify={(msg, isError) => showNotification(msg, isError)}
+                  />
 
                   <div className="flex justify-end gap-2 pt-2">
                     <button
@@ -3875,6 +3672,46 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           )}
 
+          {/* TAB 8B: QUẢN LÝ TÀI NGUYÊN TIỆN ÍCH DÂN CƯ (DOCUMENT UPLOADER) */}
+          {activeTab === 'utilityResources' && (
+            <div className="space-y-6">
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+                  <div>
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-[10px] font-extrabold uppercase tracking-wider mb-1.5">
+                      <FolderOpen className="w-3 h-3 text-indigo-700" />
+                      <span>TRUNG TÂM QUẢN TRỊ TÀI NGUYÊN & HƯỚNG DẪN TIỆN ÍCH DÂN CƯ</span>
+                    </div>
+                    <h3 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">
+                      TẢI LÊN &amp; QUẢN LÝ TÀI NGUYÊN SỐ (MP4, DOCX, PPTX, PDF)
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Hỗ trợ Ban Điều hành tải lên các tệp video clip hướng dẫn thực tế (.mp4), biểu mẫu và hướng dẫn văn bản (.docx), slide trình chiếu tập huấn (.pptx) và sổ tay cẩm nang (.pdf) cho toàn bộ thư viện tiện ích phục vụ nhân dân Khu phố 02.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <DocumentUploader
+                digitalUtilities={adminData.digitalUtilities}
+                utilityName="Kho tài nguyên số Khu phố 02"
+                resources={quickManageResources}
+                onChange={setQuickManageResources}
+                onSaveDirectly={async (utilId, updated) => {
+                  const targetUtil = adminData.digitalUtilities.find((u) => u.id === utilId);
+                  if (!targetUtil) return;
+                  await saveUtilityApi({
+                    ...targetUtil,
+                    ...updated,
+                  });
+                  showNotification(`Đã lưu thành công bộ tài nguyên cho tiện ích "${targetUtil.name}"!`);
+                  onRefresh();
+                }}
+                onNotify={(msg, isError) => showNotification(msg, isError)}
+              />
+            </div>
+          )}
+
           {/* TAB 9: BẢO MẬT & SAO LƯU */}
           {activeTab === 'backup' && (
             <div className="space-y-6 max-w-3xl">
@@ -3915,23 +3752,103 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
 
               {/* Backup & Restore */}
-              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-                <h3 className="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
-                  <Database className="w-4 h-4 text-blue-700" />
-                  SAO LƯU & PHỤC HỒI HỆ THỐNG
-                </h3>
-                <p className="text-xs text-slate-600 mb-4">
-                  Tải về bản sao lưu toàn bộ dữ liệu Khu phố 02 để lưu trữ an toàn định kỳ.
-                </p>
-                <div className="flex gap-3">
-                  <a
-                    href="/api/admin/backup"
-                    download
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-xs"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>Tải bản sao lưu JSON</span>
-                  </a>
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                      <Database className="w-4 h-4 text-blue-700" />
+                      <span>SAO LƯU, PHỤC HỒI & ĐỒNG BỘ GITHUB / VERCEL</span>
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Dữ liệu được lưu trữ trực tiếp vào bộ nhớ máy tính này, không bị mất khi đóng trình duyệt. Bạn có thể xuất file để đưa lên GitHub cho toàn bộ người dân xem qua Vercel.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50/50 flex flex-col justify-between">
+                    <div>
+                      <div className="font-bold text-xs text-emerald-900 mb-1 flex items-center gap-1.5">
+                        <Download className="w-4 h-4 text-emerald-700" />
+                        <span>Xuất tệp database.json</span>
+                      </div>
+                      <p className="text-[11px] text-emerald-700">
+                        Tải toàn bộ dữ liệu bạn vừa chỉnh sửa (cán bộ, thông tin, tiện ích, đoàn thể...) về máy dạng file chuẩn.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const db = getLocalDatabase();
+                        const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'database.json';
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        alert('Đã xuất file database.json thành công về máy tính của bạn!');
+                      }}
+                      className="mt-3 inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Tải về file database.json</span>
+                    </button>
+                  </div>
+
+                  <div className="p-4 rounded-xl border border-blue-200 bg-blue-50/50 flex flex-col justify-between">
+                    <div>
+                      <div className="font-bold text-xs text-blue-900 mb-1 flex items-center gap-1.5">
+                        <Upload className="w-4 h-4 text-blue-700" />
+                        <span>Phục hồi / Nạp tệp database.json</span>
+                      </div>
+                      <p className="text-[11px] text-blue-700">
+                        Nạp dữ liệu từ một file JSON đã lưu trữ trước đó vào hệ thống trên máy này.
+                      </p>
+                    </div>
+                    <label className="mt-3 inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold transition-all shadow-xs cursor-pointer">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Chọn file JSON để nạp</span>
+                      <input
+                        type="file"
+                        accept=".json"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            try {
+                              const content = event.target?.result as string;
+                              const parsed = JSON.parse(content);
+                              if (parsed && parsed.communityInfo) {
+                                saveLocalDatabase(parsed);
+                                alert('Đã nạp dữ liệu thành công! Trang web sẽ tự động làm mới để hiển thị.');
+                                window.location.reload();
+                              } else {
+                                alert('Tệp JSON không đúng cấu trúc dữ liệu của Khu phố 02.');
+                              }
+                            } catch {
+                              alert('Lỗi đọc tệp JSON. Vui lòng kiểm tra lại định dạng file.');
+                            }
+                          };
+                          reader.readAsText(file);
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                {/* GitHub & Vercel Sync Instructions */}
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs text-slate-700 space-y-2">
+                  <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                    <span>💡 Hướng dẫn đưa dữ liệu mới nhất lên GitHub và Vercel:</span>
+                  </div>
+                  <ol className="list-decimal list-inside space-y-1 text-[11px] text-slate-600">
+                    <li>Sau khi bạn dùng Trang Điều Hành chỉnh sửa xong, bấm nút <strong>"Tải về file database.json"</strong> ở trên.</li>
+                    <li>Chép file <code>database.json</code> vừa tải về đè vào 2 vị trí: <code>data/database.json</code> và <code>public/data/database.json</code> trong thư mục mã nguồn.</li>
+                    <li>Đẩy (push) mã nguồn lên GitHub. Vercel sẽ tự động cập nhật và bất kỳ ai vào link Vercel cũng thấy trang chủ mới nhất!</li>
+                  </ol>
                 </div>
               </div>
             </div>

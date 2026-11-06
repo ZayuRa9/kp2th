@@ -23,6 +23,8 @@ const DATA_DIR = path.resolve(process.cwd(), 'data');
 const DB_FILE = path.join(DATA_DIR, 'database.json');
 const BACKUP_DIR = path.join(DATA_DIR, 'backups');
 const UPLOAD_DIR = path.resolve(process.cwd(), 'public', 'uploads');
+const PUBLIC_DATA_DIR = path.resolve(process.cwd(), 'public', 'data');
+const PUBLIC_DB_FILE = path.join(PUBLIC_DATA_DIR, 'database.json');
 
 const ADMIN_SALT = 'kp2_tan_hung_secure_salt_2025';
 // Tài khoản: kp2.tanhung.hcm | Mật khẩu: Kp2#TanHung
@@ -424,6 +426,9 @@ class DatabaseManager {
     if (!fs.existsSync(UPLOAD_DIR)) {
       fs.mkdirSync(UPLOAD_DIR, { recursive: true });
     }
+    if (!fs.existsSync(PUBLIC_DATA_DIR)) {
+      fs.mkdirSync(PUBLIC_DATA_DIR, { recursive: true });
+    }
   }
 
   private loadDatabase(): AppDatabase {
@@ -484,6 +489,9 @@ class DatabaseManager {
       const tempFile = `${DB_FILE}.tmp.${Date.now()}`;
       fs.writeFileSync(tempFile, JSON.stringify(data, null, 2), 'utf-8');
       fs.renameSync(tempFile, DB_FILE);
+      try {
+        fs.writeFileSync(PUBLIC_DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
+      } catch {}
       if (dataToSave) {
         this.db = dataToSave;
       }
